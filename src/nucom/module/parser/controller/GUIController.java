@@ -1,4 +1,4 @@
-package nucom.module.parser;
+package nucom.module.parser.controller;
 
 import java.io.File;
 import java.io.InputStream;
@@ -24,9 +24,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.util.Callback;
+import nucom.module.parser.dataview.LineConstruct;
 import nucom.module.parser.dommanager.DocumentManager;
+import nucom.module.parser.entrypoint.EntryPoint;
 import nucom.module.parser.filter.Filter;
-import nucom.module.parser.listener.TableFocusListener;
 import nucom.module.parser.utility.Log;
 import nucom.module.parser.utility.EnumHelper.Data;
 import nucom.module.parser.utility.EnumHelper.Logic;
@@ -47,7 +48,6 @@ public class GUIController
 	
 	
 	private FileChooser FC = null;
-	private TableFocusListener TFL = null;
 	private DocumentManager DM = null;
 	private Log log = null;
 	private List<LineConstruct> FullList=null;
@@ -59,6 +59,7 @@ public class GUIController
 	@FXML
 	protected void initialize() 
 	{		
+		
 		log = new Log(this.getClass());
 		Filters = new ArrayList<Filter>();
 		log.debug("Initialized GUIController");
@@ -71,20 +72,25 @@ public class GUIController
 	
 	private void InitChoicebox()
 	{
+		// Put the whole Data enum into the choicebox
 		CHOICEBOX_VALUE = new CheckComboBox<String>();
 		ROOT_TOOLBAR.getItems().add(CHOICEBOX_VALUE);
 		for(Data D : Data.values())
 		{
 			CHOICEBOX_FIELD.getItems().add(D.toString());
 		}
+		//Set the Selection to the First Item of the choicebox
 		CHOICEBOX_FIELD.getSelectionModel().select(0);
 		
+		//Put the Logic values into it's choicebox
 		for(Logic L : Logic.values())
 		{
 			CHOICEBOX_LOGIC.getItems().add(L.toString());
 		}
+		//Set the Selection to the First Item of the choicebox
 		CHOICEBOX_LOGIC.getSelectionModel().select(0);
 		
+		//When the Choicebox_Field changes it item, refresh the Value Choicebox with the new values of the column
 		CHOICEBOX_FIELD.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>()
 		{
 
@@ -100,6 +106,7 @@ public class GUIController
 				for(LineConstruct LC : TABLE_DATA.getItems())
 				{
 					String S = LC.get(D).getValue();
+					//Check if Choicebox already contains item or not, so we don't add the same value multiple times.
 					if(!CHOICEBOX_VALUE.getItems().contains(S))
 					{
 						CHOICEBOX_VALUE.getItems().add(S);
@@ -111,7 +118,9 @@ public class GUIController
 		});
 		
 	}
-	
+	/**
+	 * Clear Choicebox_Values
+	 */
 	private void Clear_CHOICEBOX_VALUES()
 	{
 		List<String> Entries = new ArrayList<String>();
@@ -125,17 +134,21 @@ public class GUIController
 			CHOICEBOX_VALUE.getItems().remove(Entry);
 		}
 	}
-	
+	/**
+	 *  Configure the CellValueFactory for each Column
+	 */
 	private void InitTable()
 	{
 		for(Data D : Data.values())
 		{
+			//Sets the Data as the name of each column
 			TableColumn<LineConstruct, String> TC = new TableColumn<>(D.toString());
 			TC.setCellValueFactory(new Callback<CellDataFeatures<LineConstruct,String>, ObservableValue<String>>() 
 			{
 			    @Override
 			    public ObservableValue<String> call(CellDataFeatures<LineConstruct, String> data) 
 			    {
+			    	//Get the Value, based on the Data Enum
 			        return data.getValue().get(D);     
 			    }
 			});
@@ -143,13 +156,15 @@ public class GUIController
 		}
 	}
 	
-	
+	/**
+	 * Add our Logo to the GUI
+	 */
 	private void InitLogo()
 	{
 		try
 		{
 			InputStream IS = null;
-			IS = EntryPoint.class.getResourceAsStream("/nucom/module/parser/logo.png");
+			IS = EntryPoint.class.getResourceAsStream("/nucom/module/parser/controller/logo.png");
 			IMAGE_LOGO_NUCOM.setFitWidth(160.0);
 			IMAGE_LOGO_NUCOM.setFitHeight(32.0);
 			IMAGE_LOGO_NUCOM.setImage(new Image(IS, 160, 32, false, false));
@@ -166,22 +181,18 @@ public class GUIController
 	{
 		return TABLE_DATA;
 	}
-	
-	public TableFocusListener GetTFL()
-	{
-		return TFL;
-	}	
 
 	@FXML
 	public void SAVE_CSV_ACTION(ActionEvent AE)
 	{
 		log.debug("Saving CSV-File");
-		
+		DM.SaveCSV();
 	}
 
 	@FXML
 	public void LOAD_CSV_ACTION(ActionEvent AE)
 	{
+		//Load a .CSV
 		SAVE_BUTTON(false);
 		log.debug("Loading CSV File");
 		FC = new FileChooser();
@@ -189,6 +200,7 @@ public class GUIController
 		FC.setTitle("CSV wählen");
 		File CSVFile = FC.showOpenDialog(EntryPoint.ROOT_STAGE);
 		
+		//IF CSV is exists, load it with the Documentmanager
 		if(CSVFile != null && CSVFile.exists())
 		{
 			log.debug("File: " + CSVFile.getAbsolutePath());
@@ -196,6 +208,7 @@ public class GUIController
 			{
 				log.debug("Loading Successful");
 				SAVE_BUTTON(true);
+				//Put all Lineconstructs into a list, is required to reset to an original, if filters are applied/removed
 				FullList = new ArrayList<LineConstruct>();
 				for(LineConstruct LC : TABLE_DATA.getItems())
 				{
@@ -215,6 +228,7 @@ public class GUIController
 	public void ADD_FILTER_ACTION(ActionEvent AE)
 	{
 		log.debug("Adding new Filter");
+		//Get the Selected Datafield, and Logic, and the Selected items from the GUI, and convert them into a Filter Object
 		Data D = Data.valueOf(CHOICEBOX_FIELD.getSelectionModel().getSelectedItem());
 		Logic L = Logic.valueOf(CHOICEBOX_LOGIC.getSelectionModel().getSelectedItem());
 		List<String> FilterItems = new ArrayList<String>();
@@ -233,6 +247,7 @@ public class GUIController
 		
 		VBOX_FILTERS.getChildren().add(B);
 		
+		//Put a Button into the GUI, which will remove the filter, and the button itself
 		B.setOnAction(new EventHandler<ActionEvent>() 
 		{
 
@@ -251,10 +266,14 @@ public class GUIController
 		AppendFilter();
 	}
 
+	/**
+	 * Appends the Filter's which were set
+	 */
 	private void AppendFilter()
 	{
 		List<LineConstruct> FilteredList = new ArrayList<LineConstruct>();
-		ClearGUI();
+		Clear_DATA_TABLE();
+		//If no Filter is left, put the original list back into the Dataview
 		if(Filters.size() == 0)
 		{
 			
@@ -265,14 +284,14 @@ public class GUIController
 		log.debug("Filter Size: " +Filters.size());
 		log.debug("Full List Size: " + FullList.size());
 		
-		Boolean Found = true;
-		
+		Boolean Matched = true;
+		//Check each Lineconstruct against all filter
 		for(LineConstruct LC: FullList)
 		{
-			Found = true;
+			Matched = true;
 			for(Filter F : Filters)
 			{
-				log.debug(F.getValues().toString() +" <==> " + LC.get(F.getD()).getValue());
+				
 				if(F.accepts(LC.get(F.getD()).getValue()))
 				{
 					log.debug("Filter Matched");
@@ -280,10 +299,11 @@ public class GUIController
 				else
 				{
 					log.debug("Filter Not Matched");
-					Found = false;
+					Matched = false;
 				}
 			}
-			if(Found)
+			//If the Line Matched all filters, put it into the filtered list.
+			if(Matched)
 			{
 				log.debug("Adding new Item to Filtered List");
 				FilteredList.add(LC);
@@ -293,7 +313,7 @@ public class GUIController
 				
 			}
 		}
-		
+		//Put the FIltered List into the dataview
 		TABLE_DATA.getItems().addAll(FilteredList);		
 	}
 	
@@ -310,7 +330,10 @@ public class GUIController
 		});
 	}
 
-	public void ClearGUI()
+	/**
+	 * Clears the Data Table from all Data
+	 */
+	public void Clear_DATA_TABLE()
 	{
 		List<LineConstruct> Entries = new ArrayList<LineConstruct>();
 		for(LineConstruct Entry: TABLE_DATA.getItems())

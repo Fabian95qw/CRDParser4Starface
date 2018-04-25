@@ -3,8 +3,6 @@ package nucom.module.parser.dommanager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,21 +10,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javafx.scene.control.TableView;
-import javafx.stage.FileChooser;
-import nucom.module.parser.EntryPoint;
-import nucom.module.parser.GUIController;
-import nucom.module.parser.LineConstruct;
+import nucom.module.parser.controller.GUIController;
+import nucom.module.parser.dataview.LineConstruct;
 import nucom.module.parser.utility.EnumHelper.Data;
 import nucom.module.parser.utility.Log;
 
 public class DocumentManager 
 {
-	private File CSVFile = null;
 	private TableView<LineConstruct> TABLE_DATA = null; 
 	private GUIController GC = null;
 	
 	private List<String> Document = null;
 	private Log log = null;
+	
+	/**
+	 * 
+	 * @param GC ==> The active GUIController Instance, is required to write the Table_Data.
+	 */
 	
 	public DocumentManager(GUIController GC)
 	{
@@ -35,13 +35,17 @@ public class DocumentManager
 		this.GC=GC;
 	}
 
+	
+	/**
+	 * 
+	 * @param CSVFile ==> CSV-File to load
+	 * @return ==> true, if loading was successful, false otherwise
+	 */
 	public boolean LoadCSV(File CSVFile)
 	{
 		try
-		{
-			this.CSVFile = CSVFile;
-			
-			GC.ClearGUI();
+		{			
+			GC.Clear_DATA_TABLE();
 
 			BufferedReader BR = new BufferedReader(new FileReader(CSVFile));
 			
@@ -54,6 +58,7 @@ public class DocumentManager
 			
 			Integer LineNo =0;
 
+			//Read in the whole document first.
 			while((LineRead = BR.readLine()) != null)
 			{
 				Document.add(LineRead);
@@ -69,6 +74,7 @@ public class DocumentManager
 			{
 				log.debug("Working on: " +Line);
 				Split = Line.split(";");
+				//IF it's the First line, Convert Line Into a Teplate, of Data <--> Position
 				if(First)
 				{
 					First = false;
@@ -77,6 +83,7 @@ public class DocumentManager
 					{
 						try
 						{
+							//Remove " from the Input, in Order to convert it to the data enum
 							Piece= Piece.replace("\"", "");
 							Data D = Data.valueOf(Piece);
 							Template.put(D, Pos);	
@@ -91,15 +98,13 @@ public class DocumentManager
 				}
 				else
 				{
+					//Try to Translate the Line into
 					LC = new LineConstruct();
 					for(Entry<Data, Integer> Entry: Template.entrySet())
 					{
-						String S = Entry.getKey().toString();
-						String output = S.substring(0, 1).toUpperCase() + S.substring(1);
-						//log.debug("set"+output);
-						Method M = LC.getClass().getMethod("set"+output, String.class);
-						M.invoke(LC, Split[Entry.getValue()]);
+						LC.set(Entry.getKey(), Split[Entry.getValue()]);
 					}
+					//Add the Converted Data to the Table
 					log.debug("Adding new Line to Table");
 					TABLE_DATA.getItems().add(LC);
 					LineNo++;
@@ -117,48 +122,7 @@ public class DocumentManager
 	
 	public void SaveCSV()
 	{
-		try
-		{			
-
-			log.debug("Saving File");
-			
-			FileChooser Save_To = new FileChooser();
-			
-			Save_To.setTitle("CSV wählen");
-			
-			Save_To.setInitialFileName(CSVFile.getName());
-			
-			FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("CSV-File", "*.csv");
-			Save_To.setSelectedExtensionFilter(extFilter);
-			
-			
-			File F = Save_To.showSaveDialog(EntryPoint.ROOT_STAGE);				
-			
-			if(F == null)
-			{
-				return;
-			}
-			
-			if(!F.getName().contains(".")) {
-				  F = new File(F.getAbsolutePath() + ".csv");
-				}
-			
-			log.debug("Saving to File: " + F.getAbsolutePath());
-			
-			FileWriter FW = new FileWriter(F);
-			for(String DocLine : Document)
-			{
-				FW.write(DocLine);
-				FW.write(System.lineSeparator());
-			}
-			
-			FW.close();
-				
-			}
-		catch(Exception e)
-		{
-			log.EtoStringLog(e);
-		}
+		//TODO SAVING
 	}
 	
 

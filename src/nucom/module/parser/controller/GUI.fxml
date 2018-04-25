@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nucom.module.parser.GUIController">
+<BorderPane xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="nucom.module.parser.controller.GUIController">
    <top>
       <ToolBar fx:id="ROOT_TOOLBAR" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <items>

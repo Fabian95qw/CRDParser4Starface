@@ -2,6 +2,12 @@ package nucom.module.parser.utility;
 
 public class EnumHelper 
 {
+	/**
+	 * 
+	 * @author FZU
+	 * Data Enum, for the known .csv Fields
+	 */
+	
 	public enum Data
 	{
 		id,

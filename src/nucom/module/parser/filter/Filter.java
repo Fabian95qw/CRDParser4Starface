@@ -11,6 +11,13 @@ public class Filter
 	private List<String> Values=null;
 	private Logic L = null;
 	
+	/**
+	 * 
+	 * @param D ==> Which Datafield to apply the filter to
+	 * @param Values ==> Which Values to use
+	 * @param L ==> if it has to be equals or equalsnot the values
+	 */
+	
 	public Filter(Data D, List<String> Values, Logic L)
 	{
 		this.D=D;
@@ -22,17 +29,18 @@ public class Filter
 		return D;
 	}
 
-
-	public List<String> getValues() {
-		return Values;
-	}
-
 	@Override
 	public String toString()
 	{
 		String Result = D.toString()+" "+ L.toString() +" " + Values.toString();
 		return Result;
 	}
+	
+	/**
+	 * 
+	 * @param Value ==> Value to check against this filter. 
+	 * @return true ==> The value is valid for this filter. false ==> the value does not match the filter.
+	 */
 
 	public boolean accepts(String Value) 
 	{
