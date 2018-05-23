@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane fx:id="ROOT_PANE" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <left>
+      <ChoiceBox fx:id="CHOICEBOX_FUNCTION" BorderPane.alignment="CENTER" />
+   </left>
+</BorderPane>

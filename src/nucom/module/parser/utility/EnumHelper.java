@@ -21,6 +21,7 @@ public class EnumHelper
 		calledcallerid,
 		serviceid,
 		starttime,
+		starttimeformatted,
 		ringingtime,
 		linktime,
 		callresulttime,
@@ -46,7 +47,24 @@ public class EnumHelper
 	public enum Logic
 	{
 		EQUALS,
-		EQUALSNOT
+		EQUALSNOT,
+		LIKE,
+		LIKENOT,
+		GREATER_THAN,
+		LESS_THAN,
+	}
+	
+	public enum StatisticTypes
+	{
+		NONE,
+		Line,
+		Pie, 
+		Stacked
+	}
+	
+	public enum StatisticLogic
+	{
+		MERGE_WHERE
 	}
 	
 }

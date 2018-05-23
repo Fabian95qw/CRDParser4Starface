@@ -13,17 +13,23 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToolBar;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Callback;
+import nucom.module.parser.controller.statistics.StatisticsController;
 import nucom.module.parser.dataview.LineConstruct;
 import nucom.module.parser.dommanager.DocumentManager;
 import nucom.module.parser.entrypoint.EntryPoint;
@@ -42,9 +48,9 @@ public class GUIController
 	@FXML ImageView IMAGE_LOGO_NUCOM;
 	@FXML ChoiceBox<String> CHOICEBOX_FIELD;
 	@FXML ChoiceBox<String> CHOICEBOX_LOGIC;
-	CheckComboBox<String> CHOICEBOX_VALUE;
+	private CheckComboBox<String> CHOICEBOX_VALUE;
 	@FXML VBox VBOX_FILTERS;
-	
+	@FXML TextField TEXTFIELD_VALUE;
 	
 	
 	private FileChooser FC = null;
@@ -75,6 +81,8 @@ public class GUIController
 		// Put the whole Data enum into the choicebox
 		CHOICEBOX_VALUE = new CheckComboBox<String>();
 		ROOT_TOOLBAR.getItems().add(CHOICEBOX_VALUE);
+		ROOT_TOOLBAR.getItems().remove(TEXTFIELD_VALUE);
+		
 		for(Data D : Data.values())
 		{
 			CHOICEBOX_FIELD.getItems().add(D.toString());
@@ -89,6 +97,43 @@ public class GUIController
 		}
 		//Set the Selection to the First Item of the choicebox
 		CHOICEBOX_LOGIC.getSelectionModel().select(0);
+		
+		CHOICEBOX_LOGIC.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>()
+		{
+
+			@Override
+			public void changed(ObservableValue<? extends String> value, String oldvalue, String newvalue) 
+			{
+				log.debug("Choice Changed");
+				log.debug("Old value:" + oldvalue);
+				log.debug("New Value:" + newvalue);
+				
+				Logic L = Logic.valueOf(newvalue);
+				
+				switch(L)
+				{
+				case EQUALS:
+				case EQUALSNOT:
+					ROOT_TOOLBAR.getItems().remove(TEXTFIELD_VALUE);
+					if(!ROOT_TOOLBAR.getItems().contains(CHOICEBOX_VALUE))
+					{
+						ROOT_TOOLBAR.getItems().add(CHOICEBOX_VALUE);
+					}
+					break;
+				case LIKE:
+				case LIKENOT:
+				case GREATER_THAN:
+				case LESS_THAN:
+					ROOT_TOOLBAR.getItems().remove(CHOICEBOX_VALUE);
+					if(!ROOT_TOOLBAR.getItems().contains(TEXTFIELD_VALUE))
+					{
+						ROOT_TOOLBAR.getItems().add(TEXTFIELD_VALUE);
+					}
+					break;
+				}
+				
+			}
+		});
 		
 		//When the Choicebox_Field changes it item, refresh the Value Choicebox with the new values of the column
 		CHOICEBOX_FIELD.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>()
@@ -190,6 +235,30 @@ public class GUIController
 	}
 
 	@FXML
+	public void OPEN_STATISTICS_WINDOW(ActionEvent AE)
+	{
+		FXMLLoader GUILOADER = new FXMLLoader();
+		
+		try
+		{
+			BorderPane ROOT_PANE = GUILOADER.load(EntryPoint.class.getResourceAsStream("/nucom/module/parser/controller/statistics/Statistics.fxml"));
+			GUILOADER.getController();
+			
+			StatisticsController ST  = GUILOADER.<StatisticsController>getController();
+			ST.SetGUIController(this);
+			
+			Stage S = new Stage();
+			Scene SC = new Scene(ROOT_PANE);
+			S.setScene(SC);
+			S.show();
+		}
+		catch(Exception e)
+		{
+			log.EtoStringLog(e);
+		}
+	}
+	
+	@FXML
 	public void LOAD_CSV_ACTION(ActionEvent AE)
 	{
 		//Load a .CSV
@@ -233,13 +302,27 @@ public class GUIController
 		Logic L = Logic.valueOf(CHOICEBOX_LOGIC.getSelectionModel().getSelectedItem());
 		List<String> FilterItems = new ArrayList<String>();
 		
-		for(String S : CHOICEBOX_VALUE.getItems())
+		switch(L)
 		{
-			if(CHOICEBOX_VALUE.getItemBooleanProperty(S).getValue())
+		case EQUALS:
+		case EQUALSNOT:
+			for(String S : CHOICEBOX_VALUE.getItems())
 			{
-				FilterItems.add(S);
+				if(CHOICEBOX_VALUE.getItemBooleanProperty(S).getValue())
+				{
+					FilterItems.add(S);
+				}
 			}
+			break;
+		case LIKE:
+		case LIKENOT:
+		case GREATER_THAN:
+		case LESS_THAN:
+			FilterItems.add(TEXTFIELD_VALUE.getText());
+			break;
+		
 		}
+		
 		log.debug("Adding Filter:" + D.toString() +" with Values: " + FilterItems.toString());
 		
 		Filter F = new Filter(D, FilterItems, L);
@@ -290,8 +373,7 @@ public class GUIController
 		{
 			Matched = true;
 			for(Filter F : Filters)
-			{
-				
+			{	
 				if(F.accepts(LC.get(F.getD()).getValue()))
 				{
 					log.debug("Filter Matched");
